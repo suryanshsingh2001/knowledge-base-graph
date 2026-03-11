@@ -21,7 +21,8 @@ export function getLayoutedElements(
   g.setGraph({ rankdir: "TB", nodesep: 120, ranksep: 140 });
 
   nodes.forEach((node) => {
-    g.setNode(node.id, { width: 200, height: 100 });
+    const hasNote = node.data.note && node.data.note.length > 0;
+    g.setNode(node.id, { width: 200, height: hasNote ? 100 : 60 });
   });
 
   edges.forEach((edge) => {
@@ -34,8 +35,8 @@ export function getLayoutedElements(
     const pos = g.node(node.id);
     // Use stored position if available, otherwise use dagre layout
     const position = positions?.[node.id] ?? {
-      x: pos.x - 100,
-      y: pos.y - 50,
+      x: pos.x - 90,
+      y: pos.y - 30,
     };
     return { ...node, position };
   });

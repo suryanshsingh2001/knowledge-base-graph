@@ -9,25 +9,25 @@ function GraphNodeComponent({ data, selected }: NodeProps<GraphNode>) {
   return (
     <div
       className={cn(
-        "group relative rounded-xl border bg-card px-4 py-3 shadow-sm transition-all duration-200",
+        "graph-node-enter group relative rounded-xl border bg-card px-4 py-3 shadow-sm transition-all duration-200",
         "hover:shadow-md hover:border-primary/40",
         selected
-          ? "border-primary shadow-md ring-2 ring-primary/20 node-selected-glow"
+          ? "border-primary shadow-lg ring-2 ring-primary/25 scale-[1.02]"
           : "border-border"
       )}
-      style={{ minWidth: 160, maxWidth: 220 }}
+      style={{ minWidth: 150, maxWidth: 220 }}
     >
       <Handle
         type="target"
         position={Position.Top}
-        className="h-2! w-2! rounded-full! border-2! border-primary! bg-background!"
+        className="h-2.5! w-2.5! rounded-full! border-2! border-primary/60! bg-background! transition-colors! hover:border-primary! hover:bg-primary/10!"
       />
-      <div className="flex flex-col gap-0.5">
+      <div className="flex flex-col gap-1">
         <span className="text-sm font-semibold leading-tight text-foreground">
           {data.title}
         </span>
         {data.note && (
-          <span className="text-xs text-muted-foreground line-clamp-2 leading-snug">
+          <span className="text-[11px] text-muted-foreground line-clamp-2 leading-snug">
             {data.note}
           </span>
         )}
@@ -35,7 +35,7 @@ function GraphNodeComponent({ data, selected }: NodeProps<GraphNode>) {
       <Handle
         type="source"
         position={Position.Bottom}
-        className="h-2! w-2! rounded-full! border-2! border-primary! bg-background!"
+        className="h-2.5! w-2.5! rounded-full! border-2! border-primary/60! bg-background! transition-colors! hover:border-primary! hover:bg-primary/10!"
       />
     </div>
   );

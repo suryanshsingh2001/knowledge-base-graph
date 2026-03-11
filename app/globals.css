@@ -128,63 +128,59 @@
   }
 }
 
-/* ── React Flow overrides ── */
-.react-flow__edge-path {
-  stroke-width: 2;
-}
-
-.react-flow__edge.animated path {
-  animation: dash 1.5s linear infinite;
-}
-
-@keyframes dash {
-  to {
-    stroke-dashoffset: -20;
-  }
-}
-
-/* ── Node entrance animation ── */
+/* Node entrance animation */
 @keyframes node-enter {
-  from {
+  0% {
     opacity: 0;
-    transform: scale(0.85);
+    transform: scale(0.8);
   }
-  to {
+  100% {
     opacity: 1;
     transform: scale(1);
   }
 }
 
-.react-flow__node {
+.graph-node-enter {
   animation: node-enter 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 
-/* ── Edge drawing animation ── */
+/* Edge path drawing animation */
+.react-flow__edge-path {
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: edge-draw 0.8s ease-out forwards;
+}
+
 @keyframes edge-draw {
-  from {
-    stroke-dasharray: 200;
-    stroke-dashoffset: 200;
-  }
   to {
-    stroke-dasharray: 200;
     stroke-dashoffset: 0;
   }
 }
 
-.edge-appear path {
-  animation: edge-draw 0.6s ease-out forwards;
+/* Slow smooth dotted animation on animated edges */
+.react-flow__edge.animated .react-flow__edge-path {
+  stroke-dasharray: 6 4;
+  stroke-dashoffset: 0;
+  animation: edge-flow 3s linear infinite;
 }
 
-/* ── Selected node glow pulse ── */
-@keyframes glow-pulse {
-  0%, 100% {
-    box-shadow: 0 0 0 0 oklch(0.205 0 0 / 0.15);
-  }
-  50% {
-    box-shadow: 0 0 12px 4px oklch(0.205 0 0 / 0.12);
+@keyframes edge-flow {
+  to {
+    stroke-dashoffset: -30;
   }
 }
 
-.node-selected-glow {
-  animation: glow-pulse 2s ease-in-out infinite;
+/* Smooth transitions on edge labels */
+.react-flow__edge-text {
+  transition: opacity 0.3s ease;
+}
+
+/* React Flow handle hover glow */
+.react-flow__handle:hover {
+  box-shadow: 0 0 0 4px oklch(0.205 0 0 / 15%);
+}
+
+/* Smoother drag cursor */
+.react-flow__node.dragging {
+  cursor: grabbing;
 }

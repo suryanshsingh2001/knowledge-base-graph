@@ -4,8 +4,11 @@ import { useCallback, useMemo } from "react";
 import {
   ReactFlow,
   Background,
+  Controls,
   MiniMap,
   type NodeMouseHandler,
+  ConnectionLineType,
+  MarkerType,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import GraphNodeComponent from "./graph-node";
@@ -53,7 +56,7 @@ export function GraphCanvas({
     [onNodeClick]
   );
 
-  // Style nodes based on selection - dim unrelated, highlight connected
+  // Style nodes based on selection - highlight connected, dim unrelated
   const styledNodes = useMemo(() => {
     if (!selectedNodeId) return nodes;
 
@@ -63,46 +66,50 @@ export function GraphCanvas({
       if (e.target === selectedNodeId) connectedIds.add(e.source);
     });
 
-    return nodes.map((node) => {
-      const isSelected = node.id === selectedNodeId;
-      const isConnected = connectedIds.has(node.id);
-      return {
-        ...node,
-        style: isConnected
-          ? { opacity: 1, transition: "opacity 0.2s, filter 0.2s" }
-          : { opacity: 0.2, filter: "grayscale(0.5)", transition: "opacity 0.2s, filter 0.2s" },
-        className: isSelected ? "ring-2 ring-primary rounded-xl" : isConnected ? "ring-1 ring-primary/50 rounded-xl" : "",
-      };
-    });
+    return nodes.map((node) => ({
+      ...node,
+      style: connectedIds.has(node.id)
+        ? { opacity: 1, transition: "opacity 0.3s ease, filter 0.3s ease" }
+        : { opacity: 0.2, filter: "grayscale(80%)", transition: "opacity 0.3s ease, filter 0.3s ease" },
+    }));
   }, [nodes, edges, selectedNodeId]);
 
   const styledEdges = useMemo(() => {
-    if (!selectedNodeId) return edges;
+    const baseMarker = {
+      type: MarkerType.ArrowClosed,
+      width: 16,
+      height: 16,
+      color: "#999",
+    };
+
+    if (!selectedNodeId) {
+      return edges.map((edge) => ({
+        ...edge,
+        markerEnd: baseMarker,
+        style: { ...edge.style, stroke: "#999", strokeWidth: 1.5 },
+      }));
+    }
 
     return edges.map((edge) => {
       const isConnected =
         edge.source === selectedNodeId || edge.target === selectedNodeId;
       return {
         ...edge,
+        markerEnd: {
+          ...baseMarker,
+          color: isConnected ? "#555" : "#ccc",
+        },
         style: {
           ...edge.style,
-          stroke: isConnected ? "var(--primary)" : "var(--foreground)",
-          strokeWidth: isConnected ? 2.5 : 1.5,
-          opacity: isConnected ? 1 : 0.12,
-          transition: "opacity 0.2s, stroke-width 0.2s",
+          stroke: isConnected ? "#555" : "#ddd",
+          strokeWidth: isConnected ? 2.5 : 1,
+          opacity: isConnected ? 1 : 0.2,
+          transition: "opacity 0.3s ease, stroke 0.3s ease",
         },
+        animated: isConnected,
       };
     });
   }, [edges, selectedNodeId]);
-
-  const defaultEdgeOptions = useMemo(
-    () => ({
-      type: "smoothstep",
-      style: { stroke: "var(--foreground)", strokeWidth: 2 },
-      animated: true,
-    }),
-    []
-  );
 
   return (
     <div className="relative h-full w-full">
@@ -115,13 +122,22 @@ export function GraphCanvas({
         onNodeClick={handleNodeClick}
         onPaneClick={onPaneClick}
         nodeTypes={nodeTypes}
-        defaultEdgeOptions={defaultEdgeOptions}
+        connectionLineType={ConnectionLineType.SmoothStep}
+        defaultEdgeOptions={{
+          type: "smoothstep",
+          animated: true,
+          style: { stroke: "#999", strokeWidth: 1.5 },
+        }}
         fitView
         fitViewOptions={{ padding: 0.3 }}
         proOptions={{ hideAttribution: true }}
         className="bg-background"
       >
-        <Background color="hsl(var(--border))" gap={20} size={1} />
+        <Background color="hsl(var(--border))" gap={24} size={1} />
+        <Controls
+          showInteractive={false}
+          className="bg-card! border-border! rounded-lg! shadow-sm!"
+        />
         <MiniMap
           className="bg-card! border-border! rounded-lg! shadow-sm!"
           nodeColor="hsl(var(--primary))"

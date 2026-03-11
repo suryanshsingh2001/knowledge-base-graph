@@ -17,6 +17,7 @@ function KnowledgeGraph() {
     selectedNode,
     selectedNodeId,
     initialized,
+    setNodes,
     setSelectedNodeId,
     onNodesChange,
     onEdgesChange,
@@ -32,15 +33,10 @@ function KnowledgeGraph() {
   const [addEdgeOpen, setAddEdgeOpen] = useState(false);
 
   const handleResetLayout = useCallback(() => {
+    // Pass no positions to force fresh dagre layout
     const layouted = getLayoutedElements(nodes, edges);
-    onNodesChange(
-      layouted.nodes.map((n) => ({
-        type: "position" as const,
-        id: n.id,
-        position: n.position,
-      }))
-    );
-  }, [nodes, edges, onNodesChange]);
+    setNodes(layouted.nodes);
+  }, [nodes, edges, setNodes]);
 
   if (!initialized) {
     return (

@@ -53,7 +53,7 @@ export function AddNodeDialog({ open, onOpenChange, onAdd }: AddNodeDialogProps)
               value={note}
               onChange={(e) => setNote(e.target.value)}
               placeholder="Add a description..."
-              className="min-h-[80px] resize-none"
+              className="min-h-20 resize-none"
             />
           </div>
           <DialogFooter>
