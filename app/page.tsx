@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { ReactFlowProvider } from "@xyflow/react";
-import { AppHeader } from "@/shared/components/app-header";
+import { AppHeader } from "@/components/shared/app-header";
 import { GraphCanvas } from "@/features/graph/components/graph-canvas";
 import { useGraphStore } from "@/features/graph/hooks/use-graph-store";
 import { getLayoutedElements } from "@/features/graph/lib/graph-layout";
