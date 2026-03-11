@@ -37,10 +37,10 @@ function toFlowEdges(data: GraphEdgeData[]): GraphEdge[] {
     type: "default",
     animated: true,
     style: { stroke: "#555", strokeWidth: 2 },
-    labelStyle: { fontSize: 11, fontWeight: 500, fill: "#888" },
-    labelBgStyle: { fill: "var(--background)", fillOpacity: 0.8 },
-    labelBgPadding: [6, 4] as [number, number],
-    labelBgBorderRadius: 4,
+    labelStyle: { fontSize: 12, fontWeight: 700, fill: "#444", letterSpacing: "0.01em" },
+    labelBgStyle: { fill: "var(--background)", fillOpacity: 0.9, stroke: "#e0e0e0", strokeWidth: 1 },
+    labelBgPadding: [8, 5] as [number, number],
+    labelBgBorderRadius: 6,
   }));
 }
 
@@ -127,10 +127,10 @@ export function useGraphStore() {
         label: "related to",
         animated: true,
         style: { stroke: "#555", strokeWidth: 2 },
-        labelStyle: { fontSize: 11, fontWeight: 500, fill: "#888" },
-        labelBgStyle: { fill: "var(--background)", fillOpacity: 0.8 },
-        labelBgPadding: [6, 4] as [number, number],
-        labelBgBorderRadius: 4,
+        labelStyle: { fontSize: 12, fontWeight: 700, fill: "#444", letterSpacing: "0.01em" },
+        labelBgStyle: { fill: "var(--background)", fillOpacity: 0.9, stroke: "#e0e0e0", strokeWidth: 1 },
+        labelBgPadding: [8, 5] as [number, number],
+        labelBgBorderRadius: 6,
       };
       setEdges((eds) => addEdge(newEdge, eds));
     },
@@ -183,10 +183,10 @@ export function useGraphStore() {
         label,
         animated: true,
         style: { stroke: "#555", strokeWidth: 2 },
-        labelStyle: { fontSize: 11, fontWeight: 500, fill: "#888" },
-        labelBgStyle: { fill: "var(--background)", fillOpacity: 0.8 },
-        labelBgPadding: [6, 4] as [number, number],
-        labelBgBorderRadius: 4,
+        labelStyle: { fontSize: 12, fontWeight: 700, fill: "#444", letterSpacing: "0.01em" },
+        labelBgStyle: { fill: "var(--background)", fillOpacity: 0.9, stroke: "#e0e0e0", strokeWidth: 1 },
+        labelBgPadding: [8, 5] as [number, number],
+        labelBgBorderRadius: 6,
       };
       setEdges((eds) => [...eds, newEdge]);
     },

@@ -20,6 +20,7 @@ function GraphNodeComponent({ data, selected }: NodeProps<GraphNode>) {
       <Handle
         type="target"
         position={Position.Top}
+        style={{ top: -4 }}
         className="h-2.5! w-2.5! rounded-full! border-2! border-primary/60! bg-background! transition-colors! hover:border-primary! hover:bg-primary/10!"
       />
       <div className="flex flex-col gap-1">
@@ -35,6 +36,7 @@ function GraphNodeComponent({ data, selected }: NodeProps<GraphNode>) {
       <Handle
         type="source"
         position={Position.Bottom}
+        style={{ bottom: -4 }}
         className="h-2.5! w-2.5! rounded-full! border-2! border-primary/60! bg-background! transition-colors! hover:border-primary! hover:bg-primary/10!"
       />
     </div>

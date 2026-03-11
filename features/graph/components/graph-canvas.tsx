@@ -77,9 +77,10 @@ export function GraphCanvas({
   const styledEdges = useMemo(() => {
     const baseMarker = {
       type: MarkerType.ArrowClosed,
-      width: 16,
-      height: 16,
+      width: 12,
+      height: 12,
       color: "#999",
+      strokeWidth: 1,
     };
 
     if (!selectedNodeId) {
@@ -87,6 +88,7 @@ export function GraphCanvas({
         ...edge,
         markerEnd: baseMarker,
         style: { ...edge.style, stroke: "#999", strokeWidth: 1.5 },
+        labelStyle: { ...edge.labelStyle, opacity: 0.7, transition: "opacity 0.3s ease" },
       }));
     }
 
@@ -95,16 +97,32 @@ export function GraphCanvas({
         edge.source === selectedNodeId || edge.target === selectedNodeId;
       return {
         ...edge,
+        label: isConnected ? edge.label : "",
         markerEnd: {
           ...baseMarker,
+          width: isConnected ? 14 : 10,
+          height: isConnected ? 14 : 10,
           color: isConnected ? "#555" : "#ccc",
         },
         style: {
           ...edge.style,
-          stroke: isConnected ? "#555" : "#ddd",
-          strokeWidth: isConnected ? 2.5 : 1,
-          opacity: isConnected ? 1 : 0.2,
-          transition: "opacity 0.3s ease, stroke 0.3s ease",
+          stroke: isConnected ? "#555" : "#e5e5e5",
+          strokeWidth: isConnected ? 2.5 : 0.8,
+          opacity: isConnected ? 1 : 0.15,
+          transition: "opacity 0.4s ease, stroke 0.4s ease, stroke-width 0.4s ease",
+        },
+        labelStyle: {
+          ...edge.labelStyle,
+          fill: isConnected ? "#222" : "#888",
+          fontWeight: isConnected ? 800 : 600,
+          fontSize: isConnected ? 13 : 11,
+          opacity: isConnected ? 1 : 0,
+          transition: "opacity 0.3s ease",
+        },
+        labelBgStyle: {
+          ...(edge.labelBgStyle as Record<string, unknown>),
+          opacity: isConnected ? 0.8 : 0,
+          transition: "opacity 0.3s ease",
         },
         animated: isConnected,
       };
