@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { GraphMinimap } from "./graph-minimap";
 import { coseBilkentLayoutOptions } from "../lib/graph-layout";
 import { cyStylesheet } from "../lib/graph-stylesheet";
-import { getNodeColor } from "../lib/graph-node-colors";
+import { getNodeColor, buildNodeBackgroundImage } from "../lib/graph-node-colors";
 import type { GraphNode, GraphEdge, GraphCanvasProps } from "../types/graph-types";
 
 // Register cose-bilkent layout extension
@@ -119,21 +119,23 @@ export function GraphCanvas({
       const color = getNodeColor(node.data.color ? parseInt(node.data.color, 10) : index);
       const title = node.data.title;
       const note = node.data.note;
-      const label = note ? `${title}\n${note}` : title;
 
       if (!cyNodeIds.has(node.id)) {
+        const bg = buildNodeBackgroundImage(color.border, color.text, title, note);
         cy.add({
           group: "nodes",
           data: {
             id: node.id,
             title,
-            label,
+            label: "",
             note: note || "",
             bgColor: color.bg,
             borderColor: color.border,
             textColor: color.text,
             accentColor: color.accent,
             colorIndex: String(index),
+            bgImage: bg.dataUri,
+            nodeHeight: bg.height,
           },
           position: { x: node.position.x, y: node.position.y },
         });
@@ -143,8 +145,13 @@ export function GraphCanvas({
           cyNode.data("title") !== title ||
           cyNode.data("note") !== (note || "")
         ) {
-          const updatedLabel = (note || "") ? `${title}\n${note || ""}` : title;
-          cyNode.data({ title, note: note || "", label: updatedLabel });
+          const bg = buildNodeBackgroundImage(color.border, color.text, title, note);
+          cyNode.data({
+            title,
+            note: note || "",
+            bgImage: bg.dataUri,
+            nodeHeight: bg.height,
+          });
         }
       }
     });
