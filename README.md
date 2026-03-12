@@ -1,253 +1,290 @@
-# Knowledge Graph
+# Personal Knowledge Graph Viewer
 
-A frontend-only interactive knowledge graph — like a lightweight personal Obsidian. Create notes, connect them with labeled relationships, and explore them visually in a live graph.
+Build a **frontend-only interactive knowledge graph** using **Next.js (App Router) and TypeScript**.
 
-Built with **Next.js 16**, **Cytoscape.js**, **TypeScript**, **TailwindCSS v4**, and **shadcn/ui**.
+The application allows users to create notes (nodes), connect them with relationships (edges), and explore them visually in a graph interface.
 
----
-
-## Features
-
-- **Interactive graph canvas** — pan, zoom, and drag nodes freely
-- **cose-bilkent auto-layout** — nodes are automatically arranged with no overlaps on first load
-- **Click to inspect** — select a node to open a details sidebar; connected nodes highlight, unrelated ones fade
-- **Full CRUD** — create/edit/delete nodes and labeled edges
-- **8-color node palette** — nodes are automatically assigned distinct colors for visual differentiation
-- **Canvas minimap** — bottom-right corner overview with click-to-pan; hidden on mobile
-- **Zoom controls** — zoom in/out, fit-to-view, and re-layout buttons on the canvas
-- **Persistent layout** — node positions are saved to `localStorage` along with the entire graph state
-- **Mobile responsive** — compact header on mobile, slide-up bottom sheet sidebar, hidden minimap
-- **Seed data** — ships with a pre-built React/Next.js tech knowledge graph so you have something to explore immediately
+This is similar to a **lightweight Obsidian-style knowledge graph**.
 
 ---
 
-## Tech Stack
+# Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Framework | [Next.js 16.1.6](https://nextjs.org) (App Router) |
-| Language | TypeScript (strict, no `any`) |
-| Graph | [Cytoscape.js](https://js.cytoscape.org) v3 |
-| Layout | [cytoscape-cose-bilkent](https://github.com/cytoscape/cytoscape.js-cose-bilkent) |
-| Styling | [TailwindCSS v4](https://tailwindcss.com) |
-| Components | [shadcn/ui](https://ui.shadcn.com) |
-| Persistence | `localStorage` (no backend) |
+* **Next.js 16.1.6** (App Router, Turbopack)
+* **React 19** + **TypeScript** (strict, no `any`)
+* **Cytoscape.js** v3 — graph visualization
+* **cytoscape-cose-bilkent** — force-directed auto-layout
+* **TailwindCSS v4** — deep navy dark theme, oklch color tokens
+* **shadcn/ui** — UI primitives
+* **localStorage** for persistence
+
+No backend is required.
 
 ---
 
-## Getting Started
+# Architecture
 
-### Prerequisites
+Feature-based architecture — each feature contains its own components, hooks, types, and utilities. Use **kebab-case file naming**.
 
-- Node.js ≥ 18
-- npm / yarn / pnpm
+Example:
 
-### Installation
-
-```bash
-git clone https://github.com/suryanshsingh2001/knowledge-base-graph.git
-cd knowledge-base-graph
-npm install
 ```
-
-### Development
-
-```bash
-npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) in your browser.
-
-### Production Build
-
-```bash
-npm run build
-npm start
+graph-canvas.tsx
+node-sidebar.tsx
+use-graph-store.ts
+graph-storage.ts
 ```
 
 ---
 
-## Project Structure
+# Project Structure
 
 ```
-knowledge-base-graph/
-├── app/
-│   ├── globals.css          # Tailwind v4 theme + dot-grid canvas background
-│   ├── layout.tsx
-│   └── page.tsx             # Root page — wires everything together
-│
-├── features/
-│   ├── graph/               # Graph visualization feature
-│   │   ├── components/
-│   │   │   ├── graph-canvas.tsx    # Cytoscape.js canvas, styles, and controls
-│   │   │   ├── graph-controls.tsx  # (legacy file, controls now inline)
-│   │   │   └── graph-minimap.tsx   # Canvas-based minimap with click-to-pan
-│   │   ├── hooks/
-│   │   │   └── use-graph-store.ts  # All graph state, CRUD, persistence
-│   │   ├── lib/
-│   │   │   ├── graph-layout.ts     # cose-bilkent layout options
-│   │   │   └── graph-storage.ts    # localStorage read/write
-│   │   ├── types/
-│   │   │   └── graph-types.ts      # TypeScript types for nodes/edges
-│   │   ├── data/
-│   │   │   └── seed-data.ts        # Default knowledge graph content
-│   │   └── index.ts                # Barrel export
-│   │
-│   └── node/                # Node interaction feature
-│       ├── components/
-│       │   ├── node-sidebar.tsx    # View/edit/delete panel for selected node
-│       │   ├── add-node-dialog.tsx # Dialog to create a new node
-│       │   └── add-edge-dialog.tsx # Dialog to create a connection
-│       └── index.tsx               # Barrel export
-│
-├── components/
-│   ├── shared/
-│   │   └── app-header.tsx   # Top navigation bar with create buttons
-│   └── ui/                  # shadcn/ui primitives
-│
-├── types/
-│   └── cytoscape-cose-bilkent.d.ts  # Type declarations for cose-bilkent plugin
-│
-└── lib/
-    └── utils.ts             # cn() helper
+/app
+  globals.css          # Tailwind v4 theme + dot-grid canvas background
+  layout.tsx
+  page.tsx             # Root page — wires everything together
+
+/features
+  /graph
+    components/
+      graph-canvas.tsx        # Cytoscape.js canvas, node styles, zoom controls
+      graph-minimap.tsx       # Canvas-based minimap with click-to-pan
+      graph-controls.tsx      # (legacy, controls now inline in graph-canvas)
+    hooks/
+      use-graph-store.ts      # All graph state, CRUD, localStorage persistence
+    lib/
+      graph-storage.ts        # localStorage read/write helpers
+      graph-layout.ts         # cose-bilkent layout options
+    types/
+      graph-types.ts          # TypeScript types for GraphNode and GraphEdge
+    data/
+      seed-data.ts            # Default knowledge graph seed content
+
+  /node
+    components/
+      node-sidebar.tsx        # View/edit/delete panel for selected node
+      add-node-dialog.tsx     # Dialog to create a new node
+      add-edge-dialog.tsx     # Dialog to create a connection
+
+/components
+  /shared
+    app-header.tsx            # Top header with logo, stats, and create buttons
+  /ui                         # shadcn/ui primitives
+
+/types
+  cytoscape-cose-bilkent.d.ts # Type declarations for the cose-bilkent plugin
+
+/lib
+  utils.ts                    # cn() helper
 ```
 
-Each feature is **self-contained** — its own components, hooks, types, and utilities. Barrel `index.ts` files at every layer let you import cleanly:
+---
+
+# Data Models
+
+Define strong TypeScript types.
+
+## Node
 
 ```ts
-// Import from feature root
-import { useGraphStore } from "@/features/graph";
-import { NodeSidebar } from "@/features/node";
-
-// Or from a specific layer
-import { coseBilkentLayoutOptions } from "@/features/graph/lib";
-import { GraphCanvas } from "@/features/graph/components";
+export type GraphNode = {
+  id: string
+  title: string
+  note?: string
+  position?: { x: number; y: number }
+  color?: string
+}
 ```
 
----
-
-## How It Works
-
-### State Management
-
-All graph state lives in `useGraphStore` (`features/graph/hooks/use-graph-store.ts`). It uses plain React `useState` and exposes clean CRUD actions.
-
-On mount:
-1. Reads from `localStorage`
-2. If found — restores nodes, edges, and saved drag positions
-3. If empty — loads seed data and runs the cose-bilkent layout
-
-Every state change auto-saves to `localStorage` (debounced 300ms).
-
-### Layout
-
-cose-bilkent (`features/graph/lib/graph-layout.ts`) calculates a force-directed layout with `idealEdgeLength: 150`, `nodeRepulsion: 6500`, and `gravity: 0.25`. Saved positions always take priority — the **Re-layout** button forces a full recalculation with animation.
-
-### Node Styling
-
-Nodes are 200×80px with fixed dimensions (no resize on interaction). Each node is assigned one of 8 colors from a predefined palette. Node labels display the title and full note text using Cytoscape's `text-wrap: "wrap"` with `text-max-width: "150px"`.
-
-### Edge Rendering
-
-Edges use Cytoscape's `bezier` curve style with mid-point labels. When a node is selected:
-
-- **Connected edges** → highlighted with bright color
-- **Connected nodes** → highlighted border
-- **Unrelated nodes/edges** → faded to near-invisible
-
----
-
-## Keyboard & Interaction Tips
-├── components/
-│   ├── shared/
-│   │   └── app-header.tsx   # Top navigation bar
-│   └── ui/                  # shadcn/ui primitives
-│
-└── lib/
-    └── utils.ts             # cn() helper
-```
-
-Each feature is **self-contained** — its own components, hooks, types, and utilities. Barrel `index.ts` files at every layer let you import cleanly:
+## Edge
 
 ```ts
-// Import from feature root
-import { useGraphStore } from "@/features/graph";
-import { NodeSidebar } from "@/features/node";
-
-// Or from a specific layer
-import { coseBilkentLayoutOptions } from "@/features/graph/lib";
-import { GraphCanvas } from "@/features/graph/components";
+export type GraphEdge = {
+  id: string
+  source: string
+  target: string
+  label: string
+}
 ```
 
 ---
 
-## How It Works
+# Core Features
 
-### State Management
+## Graph View
 
-All graph state lives in `useGraphStore` (`features/graph/hooks/use-graph-store.ts`). It wraps React Flow's `useNodesState` / `useEdgesState` and exposes clean CRUD actions.
+Render the graph using **Cytoscape.js** with the **cytoscape-cose-bilkent** layout plugin.
 
-On mount:
-1. Reads from `localStorage`
-2. If found — restores nodes, edges, and saved drag positions
-3. If empty — loads seed data and runs Dagre layout
+Requirements:
 
-Every state change auto-saves to `localStorage` (debounced 300ms).
-
-### Layout
-
-Dagre (`features/graph/lib/graph-layout.ts`) calculates a `TB` (top-to-bottom) tree layout. Node heights account for whether a note is present. Saved positions always take priority over Dagre — the **Re-layout** button forces a full recalculation.
-
-### Edge Rendering
-
-Edges use React Flow's `smoothstep` type with animated `stroke-dasharray` CSS. When a node is selected:
-
-- **Connected edges** → highlighted, label shown, animated dots
-- **Unrelated edges** → faded to near-invisible, labels hidden
+* Nodes display their **title and note** (full text, wrapped)
+* Nodes are fixed at **200×80px** — size never changes on interaction
+* Nodes are automatically assigned one of **8 distinct colors** from a predefined palette
+* Edges display a **relationship label** at the midpoint
+* Nodes must **not overlap on first load** — cose-bilkent handles this
+* Use **cose-bilkent layout** for automatic force-directed positioning
+* Nodes should be **draggable**
+* Selected node: connected nodes/edges highlight; unrelated nodes/edges fade
 
 ---
 
-## Keyboard & Interaction Tips
+# Node Interaction
 
-| Action | How |
-|---|---|
-| Select node | Click the node |
-| Deselect | Click the canvas background |
-| Edit node | Click node → edit in the right sidebar |
-| Delete node | Select node → "Delete Node" in sidebar |
-| Delete edge | Select node → click × next to the connection |
-| Add node | "Add Node" button in the top header |
-| Add edge | "Add Edge" button in the top header → pick source, target, label |
-| Drag node | Click and drag any node |
-| Re-layout | "Re-layout" button (bottom-left of canvas) — resets positions via cose-bilkent |
-| Zoom in/out | Zoom buttons (bottom-left of canvas) or scroll |
-| Fit to view | "Fit" button (bottom-left of canvas) |
-| Pan | Drag the canvas background |
-| Minimap | Bottom-right corner — click to pan to a location (desktop only) |
+Clicking a node should open the **Node Sidebar**.
+
+The sidebar should allow:
+
+* Editing **title**
+* Editing **note content**
+
+Changes should update the graph state immediately.
 
 ---
 
-## Customisation
+# CRUD Operations
 
-### Changing Seed Data
+Users should be able to perform the following operations.
 
-Edit `features/graph/data/seed-data.ts`. Clear `localStorage` in your browser (DevTools → Application → Storage) so the new seed data is picked up on next load.
+### Create
 
-### Changing the Theme
+Add a new node with:
 
-Edit CSS variables in `app/globals.css`. The project uses [oklch](https://oklch.com) colours matching the deep navy dark theme. The dot-grid canvas background is also defined here under `.graph-canvas`.
+* title
+* optional note
 
-### Changing Node Colors
-
-Edit the `NODE_COLORS` array at the top of `features/graph/components/graph-canvas.tsx`. Each entry defines `bg` (fill), `border`, and `text` colors for a node.
+Create a relationship between two nodes with a **label**.
 
 ---
 
-## Scripts
+### Update
 
-```bash
-npm run dev      # Start dev server (Turbopack)
-npm run build    # Production build
-npm run start    # Serve production build
-npm run lint     # ESLint
+Edit:
+
+* node title
+* node note
+
+---
+
+### Delete
+
+Delete a node.
+
+When a node is deleted:
+
+* all connected edges must also be removed.
+
+Users should also be able to **delete edges** individually.
+
+---
+
+# Persistence
+
+Persist the graph state using **localStorage**.
+
+Save:
+
+* nodes
+* edges
+* node positions
+
+Behavior:
+
+1. On page load
+
+   * If localStorage exists → restore saved graph
+   * Otherwise → load seed data
+
+2. Any graph update should automatically update localStorage.
+
+---
+
+# Seed Data
+
+Use the following seed data when localStorage is empty.
+
+## Nodes
+
 ```
+id,title,note
+1,React,A JavaScript library for building user interfaces using components.
+2,Next.js,React framework with SSR routing and APIs.
+3,TypeScript,Typed superset of JavaScript.
+4,State Management,Patterns like Context Zustand Redux.
+5,Component Design,Reusable UI component principles.
+6,Performance,Optimization techniques.
+7,Testing,Unit integration and e2e testing.
+8,CSS & Styling,Tailwind CSS Modules styled-components.
+```
+
+## Edges
+
+```
+source,target,label
+2,1,built on
+1,3,pairs well with
+1,4,uses
+1,5,guides
+2,6,improves
+1,7,requires
+1,8,styled with
+4,6,impacts
+5,6,impacts
+```
+
+---
+
+# UI Requirements
+
+Use **shadcn/ui** components where appropriate.
+
+Examples:
+
+* Button
+* Dialog
+* Input
+* Textarea
+* Card
+* Separator
+
+The UI should feel **clean and developer-focused**.
+
+---
+
+# UX Improvements
+
+Implemented enhancements:
+
+* ✅ **Dragging nodes** — freely drag anywhere on canvas
+* ✅ **Persist node positions** — saved to localStorage on drag end
+* ✅ **Highlight connected nodes** when a node is selected
+* ✅ **Dim unrelated nodes** — fade to near-invisible
+* ✅ **Canvas minimap** — bottom-right, canvas-based, click-to-pan, hidden on mobile
+* ✅ **Zoom controls** — zoom in/out, fit, re-layout buttons on canvas (bottom-left)
+* ✅ **Mobile responsive** — compact header, slide-up bottom sheet sidebar, hidden minimap
+* ✅ **8-color node palette** — distinct colors for visual differentiation
+
+---
+
+# Code Quality Requirements
+
+* Fully typed **TypeScript**
+* No `any`
+* Small focused components
+* Proper React hooks usage
+* Predictable state management
+* Clean folder structure
+* Follow **Cytoscape.js best practices**
+
+---
+
+# Final Result
+
+The final application should allow users to:
+
+* create notes
+* connect notes with labeled relationships
+* edit notes
+* explore the graph visually
+
+The graph state should persist across page refresh using **localStorage**.
