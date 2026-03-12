@@ -1,47 +1,34 @@
 "use client";
 
-import { Plus, Link, RotateCcw } from "lucide-react";
+import { Plus, Link } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 type GraphControlsProps = {
   onAddNode: () => void;
   onAddEdge: () => void;
-  onResetLayout: () => void;
 };
 
 export function GraphControls({
   onAddNode,
   onAddEdge,
-  onResetLayout,
 }: GraphControlsProps) {
   return (
-    <div className="absolute bottom-4 left-4 z-10 flex gap-2">
+    <div className="absolute bottom-5 left-5 z-10 flex gap-2">
       <Button
         size="sm"
-        variant="secondary"
         onClick={onAddNode}
-        className="shadow-sm"
+        className="rounded-lg bg-indigo-600 px-3.5 text-white shadow-lg shadow-indigo-600/25 hover:bg-indigo-500"
       >
         <Plus className="mr-1.5 h-4 w-4" />
-        Add Node
+        Node
       </Button>
       <Button
         size="sm"
-        variant="secondary"
         onClick={onAddEdge}
-        className="shadow-sm"
+        className="rounded-lg bg-slate-700/80 px-3.5 text-slate-200 shadow-lg shadow-black/20 backdrop-blur-sm hover:bg-slate-600/80"
       >
         <Link className="mr-1.5 h-4 w-4" />
-        Add Edge
-      </Button>
-      <Button
-        size="sm"
-        variant="ghost"
-        onClick={onResetLayout}
-        className="shadow-sm"
-      >
-        <RotateCcw className="mr-1.5 h-4 w-4" />
-        Re-layout
+        Edge
       </Button>
     </div>
   );

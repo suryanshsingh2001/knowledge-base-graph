@@ -2,19 +2,21 @@
 
 A frontend-only interactive knowledge graph — like a lightweight personal Obsidian. Create notes, connect them with labeled relationships, and explore them visually in a live graph.
 
-Built with **Next.js 16**, **React Flow**, **TypeScript**, **TailwindCSS v4**, and **shadcn/ui**.
+Built with **Next.js 16**, **Cytoscape.js**, **TypeScript**, **TailwindCSS v4**, and **shadcn/ui**.
 
 ---
 
 ## Features
 
 - **Interactive graph canvas** — pan, zoom, and drag nodes freely
-- **Dagre auto-layout** — nodes are automatically arranged with no overlaps on first load
+- **cose-bilkent auto-layout** — nodes are automatically arranged with no overlaps on first load
 - **Click to inspect** — select a node to open a details sidebar; connected nodes highlight, unrelated ones fade
 - **Full CRUD** — create/edit/delete nodes and labeled edges
-- **Animated edges** — slow dotted flow on connections; edges draw in when created
-- **Node entrance animations** — spring-scale effect when nodes appear
+- **8-color node palette** — nodes are automatically assigned distinct colors for visual differentiation
+- **Canvas minimap** — bottom-right corner overview with click-to-pan; hidden on mobile
+- **Zoom controls** — zoom in/out, fit-to-view, and re-layout buttons on the canvas
 - **Persistent layout** — node positions are saved to `localStorage` along with the entire graph state
+- **Mobile responsive** — compact header on mobile, slide-up bottom sheet sidebar, hidden minimap
 - **Seed data** — ships with a pre-built React/Next.js tech knowledge graph so you have something to explore immediately
 
 ---
@@ -23,10 +25,10 @@ Built with **Next.js 16**, **React Flow**, **TypeScript**, **TailwindCSS v4**, a
 
 | Layer | Technology |
 |---|---|
-| Framework | [Next.js 16](https://nextjs.org) (App Router) |
+| Framework | [Next.js 16.1.6](https://nextjs.org) (App Router) |
 | Language | TypeScript (strict, no `any`) |
-| Graph | [@xyflow/react](https://reactflow.dev) v12 |
-| Layout | [@dagrejs/dagre](https://github.com/dagrejs/dagre) |
+| Graph | [Cytoscape.js](https://js.cytoscape.org) v3 |
+| Layout | [cytoscape-cose-bilkent](https://github.com/cytoscape/cytoscape.js-cose-bilkent) |
 | Styling | [TailwindCSS v4](https://tailwindcss.com) |
 | Components | [shadcn/ui](https://ui.shadcn.com) |
 | Persistence | `localStorage` (no backend) |
@@ -70,20 +72,20 @@ npm start
 ```
 knowledge-base-graph/
 ├── app/
-│   ├── globals.css          # Tailwind v4 theme + custom animations
+│   ├── globals.css          # Tailwind v4 theme + dot-grid canvas background
 │   ├── layout.tsx
 │   └── page.tsx             # Root page — wires everything together
 │
 ├── features/
 │   ├── graph/               # Graph visualization feature
 │   │   ├── components/
-│   │   │   ├── graph-canvas.tsx    # ReactFlow canvas with edge/node styling
-│   │   │   ├── graph-controls.tsx  # Add node/edge + re-layout buttons
-│   │   │   └── graph-node.tsx      # Custom node renderer
+│   │   │   ├── graph-canvas.tsx    # Cytoscape.js canvas, styles, and controls
+│   │   │   ├── graph-controls.tsx  # (legacy file, controls now inline)
+│   │   │   └── graph-minimap.tsx   # Canvas-based minimap with click-to-pan
 │   │   ├── hooks/
 │   │   │   └── use-graph-store.ts  # All graph state, CRUD, persistence
 │   │   ├── lib/
-│   │   │   ├── graph-layout.ts     # Dagre layout utility
+│   │   │   ├── graph-layout.ts     # cose-bilkent layout options
 │   │   │   └── graph-storage.ts    # localStorage read/write
 │   │   ├── types/
 │   │   │   └── graph-types.ts      # TypeScript types for nodes/edges
@@ -93,11 +95,69 @@ knowledge-base-graph/
 │   │
 │   └── node/                # Node interaction feature
 │       ├── components/
-│       │   ├── node-sidebar.tsx    # Edit/delete panel for selected node
+│       │   ├── node-sidebar.tsx    # View/edit/delete panel for selected node
 │       │   ├── add-node-dialog.tsx # Dialog to create a new node
 │       │   └── add-edge-dialog.tsx # Dialog to create a connection
 │       └── index.tsx               # Barrel export
 │
+├── components/
+│   ├── shared/
+│   │   └── app-header.tsx   # Top navigation bar with create buttons
+│   └── ui/                  # shadcn/ui primitives
+│
+├── types/
+│   └── cytoscape-cose-bilkent.d.ts  # Type declarations for cose-bilkent plugin
+│
+└── lib/
+    └── utils.ts             # cn() helper
+```
+
+Each feature is **self-contained** — its own components, hooks, types, and utilities. Barrel `index.ts` files at every layer let you import cleanly:
+
+```ts
+// Import from feature root
+import { useGraphStore } from "@/features/graph";
+import { NodeSidebar } from "@/features/node";
+
+// Or from a specific layer
+import { coseBilkentLayoutOptions } from "@/features/graph/lib";
+import { GraphCanvas } from "@/features/graph/components";
+```
+
+---
+
+## How It Works
+
+### State Management
+
+All graph state lives in `useGraphStore` (`features/graph/hooks/use-graph-store.ts`). It uses plain React `useState` and exposes clean CRUD actions.
+
+On mount:
+1. Reads from `localStorage`
+2. If found — restores nodes, edges, and saved drag positions
+3. If empty — loads seed data and runs the cose-bilkent layout
+
+Every state change auto-saves to `localStorage` (debounced 300ms).
+
+### Layout
+
+cose-bilkent (`features/graph/lib/graph-layout.ts`) calculates a force-directed layout with `idealEdgeLength: 150`, `nodeRepulsion: 6500`, and `gravity: 0.25`. Saved positions always take priority — the **Re-layout** button forces a full recalculation with animation.
+
+### Node Styling
+
+Nodes are 200×80px with fixed dimensions (no resize on interaction). Each node is assigned one of 8 colors from a predefined palette. Node labels display the title and full note text using Cytoscape's `text-wrap: "wrap"` with `text-max-width: "150px"`.
+
+### Edge Rendering
+
+Edges use Cytoscape's `bezier` curve style with mid-point labels. When a node is selected:
+
+- **Connected edges** → highlighted with bright color
+- **Connected nodes** → highlighted border
+- **Unrelated nodes/edges** → faded to near-invisible
+
+---
+
+## Keyboard & Interaction Tips
 ├── components/
 │   ├── shared/
 │   │   └── app-header.tsx   # Top navigation bar
@@ -115,7 +175,7 @@ import { useGraphStore } from "@/features/graph";
 import { NodeSidebar } from "@/features/node";
 
 // Or from a specific layer
-import { getLayoutedElements } from "@/features/graph/lib";
+import { coseBilkentLayoutOptions } from "@/features/graph/lib";
 import { GraphCanvas } from "@/features/graph/components";
 ```
 
@@ -156,12 +216,14 @@ Edges use React Flow's `smoothstep` type with animated `stroke-dasharray` CSS. W
 | Edit node | Click node → edit in the right sidebar |
 | Delete node | Select node → "Delete Node" in sidebar |
 | Delete edge | Select node → click × next to the connection |
-| Add node | "Add Node" button (bottom left) |
-| Add edge | "Add Edge" button → pick source, target, label |
+| Add node | "Add Node" button in the top header |
+| Add edge | "Add Edge" button in the top header → pick source, target, label |
 | Drag node | Click and drag any node |
-| Re-layout | "Re-layout" button — resets positions via Dagre |
-| Zoom/pan | Scroll to zoom, drag canvas to pan |
-| Mini-map | Bottom-right corner — pannable and zoomable |
+| Re-layout | "Re-layout" button (bottom-left of canvas) — resets positions via cose-bilkent |
+| Zoom in/out | Zoom buttons (bottom-left of canvas) or scroll |
+| Fit to view | "Fit" button (bottom-left of canvas) |
+| Pan | Drag the canvas background |
+| Minimap | Bottom-right corner — click to pan to a location (desktop only) |
 
 ---
 
@@ -173,13 +235,11 @@ Edit `features/graph/data/seed-data.ts`. Clear `localStorage` in your browser (D
 
 ### Changing the Theme
 
-Edit CSS variables in `app/globals.css`. The project uses [oklch](https://oklch.com) colours matching shadcn/ui's neutral palette. Both light and dark tokens are defined.
+Edit CSS variables in `app/globals.css`. The project uses [oklch](https://oklch.com) colours matching the deep navy dark theme. The dot-grid canvas background is also defined here under `.graph-canvas`.
 
-### Adding New Node Types
+### Changing Node Colors
 
-1. Add a new type to `features/graph/types/graph-types.ts`
-2. Create a new renderer in `features/graph/components/`
-3. Register it in the `nodeTypes` map inside `graph-canvas.tsx`
+Edit the `NODE_COLORS` array at the top of `features/graph/components/graph-canvas.tsx`. Each entry defines `bg` (fill), `border`, and `text` colors for a node.
 
 ---
 

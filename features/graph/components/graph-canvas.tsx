@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, useState } from "react";
 import cytoscape, { type Core, type EventObject } from "cytoscape";
 import coseBilkent from "cytoscape-cose-bilkent";
-import { GraphControls } from "./graph-controls";
+import { ZoomIn, ZoomOut, Maximize2, RotateCcw } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { GraphMinimap } from "./graph-minimap";
 import { coseBilkentLayoutOptions } from "../lib/graph-layout";
 import type { GraphNode, GraphEdge } from "../types/graph-types";
 
@@ -12,8 +14,20 @@ if (typeof window !== "undefined") {
   cytoscape.use(coseBilkent);
 }
 
-function makeNodeLabel(title: string, note?: string): string {
-  return note ? `${title}\n${note}` : title;
+// Palette of rich node colors
+const NODE_COLORS = [
+  { bg: "#1e293b", border: "#3b82f6", text: "#93c5fd", accent: "#3b82f6" }, // blue
+  { bg: "#1a2332", border: "#8b5cf6", text: "#c4b5fd", accent: "#8b5cf6" }, // violet
+  { bg: "#1c2421", border: "#10b981", text: "#6ee7b7", accent: "#10b981" }, // emerald
+  { bg: "#2a1f1f", border: "#ef4444", text: "#fca5a5", accent: "#ef4444" }, // red
+  { bg: "#2a2517", border: "#f59e0b", text: "#fcd34d", accent: "#f59e0b" }, // amber
+  { bg: "#1f2937", border: "#06b6d4", text: "#67e8f9", accent: "#06b6d4" }, // cyan
+  { bg: "#271d2d", border: "#ec4899", text: "#f9a8d4", accent: "#ec4899" }, // pink
+  { bg: "#1e2a1e", border: "#84cc16", text: "#bef264", accent: "#84cc16" }, // lime
+];
+
+function getNodeColor(index: number) {
+  return NODE_COLORS[index % NODE_COLORS.length];
 }
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -22,23 +36,33 @@ const cyStylesheet: cytoscape.StylesheetStyle[] = [
     selector: "node",
     style: {
       shape: "round-rectangle",
-      "background-color": "#ffffff",
-      "border-width": 1.5,
-      "border-color": "#e5e7eb",
+      "background-color": "data(bgColor)",
+      "border-width": 2,
+      "border-color": "data(borderColor)",
+      "border-opacity": 0.85,
       label: "data(label)",
       "text-wrap": "wrap",
-      "text-max-width": "160px",
+      "text-max-width": "150px",
       "text-valign": "center",
       "text-halign": "center",
       "font-size": 12,
+      "font-weight": "bold",
       "font-family": "Inter, system-ui, sans-serif",
-      color: "#374151",
-      width: "label",
-      height: "label",
-      padding: "14px",
+      color: "#ffffff",
+      "text-outline-color": "data(bgColor)",
+      "text-outline-width": 1,
+      "text-outline-opacity": 0.6,
+      width: 200,
+      height: 80,
+      padding: "12px",
       "transition-property":
-        "border-color, border-width, opacity, background-color",
+        "border-color, border-width, opacity, background-color, shadow-blur, shadow-color, shadow-opacity",
       "transition-duration": "0.3s",
+      "shadow-blur": 16,
+      "shadow-color": "data(borderColor)",
+      "shadow-opacity": 0.25,
+      "shadow-offset-x": 0,
+      "shadow-offset-y": 3,
     } as any,
   },
   {
@@ -50,44 +74,49 @@ const cyStylesheet: cytoscape.StylesheetStyle[] = [
   {
     selector: "node.selected",
     style: {
-      "border-color": "#3b82f6",
-      "border-width": 2.5,
-      "background-color": "#eff6ff",
+      "border-width": 3,
+      "border-opacity": 1,
+      "shadow-opacity": 0.55,
+      "shadow-blur": 28,
     } as any,
   },
   {
     selector: "node.highlighted",
     style: {
       opacity: 1,
+      "border-opacity": 0.8,
     } as any,
   },
   {
     selector: "node.dimmed",
     style: {
-      opacity: 0.15,
+      opacity: 0.12,
+      "shadow-opacity": 0,
     } as any,
   },
   {
     selector: "edge",
     style: {
       width: 1.5,
-      "line-color": "#9ca3af",
-      "target-arrow-color": "#9ca3af",
+      "line-color": "#475569",
+      "target-arrow-color": "#475569",
       "target-arrow-shape": "triangle",
-      "arrow-scale": 0.8,
+      "arrow-scale": 0.7,
       "curve-style": "bezier",
       label: "data(label)",
-      "font-size": 11,
-      color: "#6b7280",
-      "text-background-color": "#ffffff",
-      "text-background-opacity": 0.9,
+      "font-size": 10,
+      "font-family": "Inter, system-ui, sans-serif",
+      color: "#94a3b8",
+      "text-background-color": "#0f172a",
+      "text-background-opacity": 0.85,
       "text-background-padding": "4px",
       "text-background-shape": "roundrectangle",
       "text-rotation": "autorotate",
       "line-style": "dashed",
       "line-dash-pattern": [6, 4],
-      opacity: 0.8,
-      "transition-property": "opacity, line-color, width, target-arrow-color",
+      opacity: 0.55,
+      "transition-property":
+        "opacity, line-color, width, target-arrow-color",
       "transition-duration": "0.3s",
     } as any,
   },
@@ -95,20 +124,19 @@ const cyStylesheet: cytoscape.StylesheetStyle[] = [
     selector: "edge.highlighted",
     style: {
       width: 2.5,
-      "line-color": "#4b5563",
-      "target-arrow-color": "#4b5563",
+      "line-color": "#818cf8",
+      "target-arrow-color": "#818cf8",
       opacity: 1,
       "font-weight": "bold",
-      "font-size": 13,
-      color: "#1f2937",
+      "font-size": 12,
+      color: "#c7d2fe",
+      "line-style": "solid",
     } as any,
   },
   {
     selector: "edge.dimmed",
     style: {
-      opacity: 0.06,
-      "line-color": "#d1d5db",
-      "target-arrow-color": "#d1d5db",
+      opacity: 0.04,
       label: "",
     } as any,
   },
@@ -126,8 +154,6 @@ type GraphCanvasProps = {
   onPositionsUpdate: (
     positions: Record<string, { x: number; y: number }>
   ) => void;
-  onAddNode: () => void;
-  onAddEdge: () => void;
 };
 
 export function GraphCanvas({
@@ -139,12 +165,11 @@ export function GraphCanvas({
   onPaneClick,
   onNodeDrag,
   onPositionsUpdate,
-  onAddNode,
-  onAddEdge,
 }: GraphCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const cyRef = useRef<Core | null>(null);
   const initializedRef = useRef(false);
+  const [cyReady, setCyReady] = useState<Core | null>(null);
 
   // Use refs for callbacks to avoid re-registering event listeners
   const onNodeClickRef = useRef(onNodeClick);
@@ -203,10 +228,12 @@ export function GraphCanvas({
     });
 
     cyRef.current = cy;
+    setCyReady(cy);
 
     return () => {
       cy.destroy();
       cyRef.current = null;
+      setCyReady(null);
       initializedRef.current = false;
     };
   }, []);
@@ -228,28 +255,36 @@ export function GraphCanvas({
 
     // Add or update nodes
     const cyNodeIds = new Set(cy.nodes().map((n) => n.id()));
-    nodes.forEach((node) => {
-      const label = makeNodeLabel(node.data.title, node.data.note);
+    nodes.forEach((node, index) => {
+      const color = getNodeColor(node.data.color ? parseInt(node.data.color, 10) : index);
+      const title = node.data.title;
+      const note = node.data.note;
+      const label = note ? `${title}\n${note}` : title;
+
       if (!cyNodeIds.has(node.id)) {
         cy.add({
           group: "nodes",
           data: {
             id: node.id,
-            title: node.data.title,
-            note: node.data.note || "",
+            title,
             label,
+            note: note || "",
+            bgColor: color.bg,
+            borderColor: color.border,
+            textColor: color.text,
+            accentColor: color.accent,
+            colorIndex: String(index),
           },
           position: { x: node.position.x, y: node.position.y },
         });
       } else {
         const cyNode = cy.getElementById(node.id);
         if (
-          cyNode.data("title") !== node.data.title ||
-          cyNode.data("note") !== (node.data.note || "")
+          cyNode.data("title") !== title ||
+          cyNode.data("note") !== (note || "")
         ) {
-          cyNode.data("title", node.data.title);
-          cyNode.data("note", node.data.note || "");
-          cyNode.data("label", label);
+          const updatedLabel = (note || "") ? `${title}\n${note || ""}` : title;
+          cyNode.data({ title, note: note || "", label: updatedLabel });
         }
       }
     });
@@ -348,18 +383,79 @@ export function GraphCanvas({
     layout.run();
   }, [persistAllPositions]);
 
+  // Zoom controls
+  const handleZoomIn = useCallback(() => {
+    const cy = cyRef.current;
+    if (!cy) return;
+    cy.animate({ zoom: { level: cy.zoom() * 1.3, renderedPosition: { x: cy.width() / 2, y: cy.height() / 2 } }, duration: 200 });
+  }, []);
+
+  const handleZoomOut = useCallback(() => {
+    const cy = cyRef.current;
+    if (!cy) return;
+    cy.animate({ zoom: { level: cy.zoom() / 1.3, renderedPosition: { x: cy.width() / 2, y: cy.height() / 2 } }, duration: 200 });
+  }, []);
+
+  const handleFitView = useCallback(() => {
+    const cy = cyRef.current;
+    if (!cy) return;
+    cy.animate({ fit: { eles: cy.elements(), padding: 50 }, duration: 300, easing: "ease-out" });
+  }, []);
+
   return (
     <div className="relative h-full w-full">
       <div
         ref={containerRef}
-        className="h-full w-full bg-background"
+        className="graph-canvas h-full w-full"
         style={{ minHeight: "400px" }}
       />
-      <GraphControls
-        onAddNode={onAddNode}
-        onAddEdge={onAddEdge}
-        onResetLayout={handleResetLayout}
-      />
+
+      {/* Bottom-left: zoom & layout controls */}
+      <div className="absolute bottom-3 left-3 z-10 flex items-center gap-1.5 sm:bottom-5 sm:left-5">
+        <div className="flex items-center gap-0.5 rounded-lg border border-slate-700/40 bg-[#0c1222]/90 p-0.5 shadow-lg shadow-black/30 backdrop-blur-md sm:p-1">
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={handleZoomIn}
+            className="h-8 w-8 text-slate-300 hover:bg-slate-700/50 hover:text-white"
+            title="Zoom in"
+          >
+            <ZoomIn className="h-4 w-4" />
+          </Button>
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={handleZoomOut}
+            className="h-8 w-8 text-slate-300 hover:bg-slate-700/50 hover:text-white"
+            title="Zoom out"
+          >
+            <ZoomOut className="h-4 w-4" />
+          </Button>
+          <div className="mx-0.5 h-4 w-px bg-slate-700/50" />
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={handleFitView}
+            className="h-8 w-8 text-slate-300 hover:bg-slate-700/50 hover:text-white"
+            title="Fit to view"
+          >
+            <Maximize2 className="h-4 w-4" />
+          </Button>
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={handleResetLayout}
+            className="h-8 w-8 text-slate-300 hover:bg-slate-700/50 hover:text-white"
+            title="Re-layout"
+          >
+            <RotateCcw className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Bottom-right: minimap */}
+      <GraphMinimap cy={cyReady} />
     </div>
   );
+
 }

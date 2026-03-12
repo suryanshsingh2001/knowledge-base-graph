@@ -10,13 +10,12 @@ This is similar to a **lightweight Obsidian-style knowledge graph**.
 
 # Tech Stack
 
-Use the following stack:
-
-* **Next.js (App Router)**
-* **TypeScript**
-* **React Flow** (graph visualization)
-* **TailwindCSS**
-* **shadcn/ui**
+* **Next.js 16.1.6** (App Router, Turbopack)
+* **React 19** + **TypeScript** (strict, no `any`)
+* **Cytoscape.js** v3 — graph visualization
+* **cytoscape-cose-bilkent** — force-directed auto-layout
+* **TailwindCSS v4** — deep navy dark theme, oklch color tokens
+* **shadcn/ui** — UI primitives
 * **localStorage** for persistence
 
 No backend is required.
@@ -25,16 +24,7 @@ No backend is required.
 
 # Architecture
 
-Use a **feature-based architecture**.
-
-Each feature should contain its own:
-
-* components
-* hooks
-* types
-* utilities
-
-Use **kebab-case file naming**.
+Feature-based architecture — each feature contains its own components, hooks, types, and utilities. Use **kebab-case file naming**.
 
 Example:
 
@@ -47,40 +37,46 @@ graph-storage.ts
 
 ---
 
-# Suggested Project Structure
+# Project Structure
 
 ```
 /app
-  page.tsx
+  globals.css          # Tailwind v4 theme + dot-grid canvas background
+  layout.tsx
+  page.tsx             # Root page — wires everything together
 
 /features
   /graph
-    components
-      graph-canvas.tsx
-      graph-node.tsx
-      graph-controls.tsx
-    hooks
-      use-graph-store.ts
-      use-graph-layout.ts
-    lib
-      graph-storage.ts
-      graph-layout.ts
-    types
-      graph-types.ts
-    data
-      seed-data.ts
+    components/
+      graph-canvas.tsx        # Cytoscape.js canvas, node styles, zoom controls
+      graph-minimap.tsx       # Canvas-based minimap with click-to-pan
+      graph-controls.tsx      # (legacy, controls now inline in graph-canvas)
+    hooks/
+      use-graph-store.ts      # All graph state, CRUD, localStorage persistence
+    lib/
+      graph-storage.ts        # localStorage read/write helpers
+      graph-layout.ts         # cose-bilkent layout options
+    types/
+      graph-types.ts          # TypeScript types for GraphNode and GraphEdge
+    data/
+      seed-data.ts            # Default knowledge graph seed content
 
   /node
-    components
-      node-sidebar.tsx
-      add-node-dialog.tsx
-      edit-node-form.tsx
+    components/
+      node-sidebar.tsx        # View/edit/delete panel for selected node
+      add-node-dialog.tsx     # Dialog to create a new node
+      add-edge-dialog.tsx     # Dialog to create a connection
 
-/shared
-  components
-    app-header.tsx
-  lib
-    utils.ts
+/components
+  /shared
+    app-header.tsx            # Top header with logo, stats, and create buttons
+  /ui                         # shadcn/ui primitives
+
+/types
+  cytoscape-cose-bilkent.d.ts # Type declarations for the cose-bilkent plugin
+
+/lib
+  utils.ts                    # cn() helper
 ```
 
 ---
@@ -92,17 +88,19 @@ Define strong TypeScript types.
 ## Node
 
 ```ts
-export type GraphNodeData = {
+export type GraphNode = {
   id: string
   title: string
   note?: string
+  position?: { x: number; y: number }
+  color?: string
 }
 ```
 
 ## Edge
 
 ```ts
-export type GraphEdgeData = {
+export type GraphEdge = {
   id: string
   source: string
   target: string
@@ -116,15 +114,18 @@ export type GraphEdgeData = {
 
 ## Graph View
 
-Render the graph using **React Flow**.
+Render the graph using **Cytoscape.js** with the **cytoscape-cose-bilkent** layout plugin.
 
 Requirements:
 
-* Nodes display their **title**
-* Edges display a **relationship label**
-* Nodes must **not overlap on first load**
-* Use **dagre layout** for automatic positioning
+* Nodes display their **title and note** (full text, wrapped)
+* Nodes are fixed at **200×80px** — size never changes on interaction
+* Nodes are automatically assigned one of **8 distinct colors** from a predefined palette
+* Edges display a **relationship label** at the midpoint
+* Nodes must **not overlap on first load** — cose-bilkent handles this
+* Use **cose-bilkent layout** for automatic force-directed positioning
 * Nodes should be **draggable**
+* Selected node: connected nodes/edges highlight; unrelated nodes/edges fade
 
 ---
 
@@ -252,19 +253,16 @@ The UI should feel **clean and developer-focused**.
 
 # UX Improvements
 
-Implement the following enhancements:
+Implemented enhancements:
 
-* Allow **dragging nodes**
-* Persist node positions
-* Highlight connected nodes when a node is selected
-* Dim unrelated nodes
-
-Optional improvements:
-
-* Edge animation
-* Node entry animation
-* React Flow mini-map
-* Zoom controls
+* ✅ **Dragging nodes** — freely drag anywhere on canvas
+* ✅ **Persist node positions** — saved to localStorage on drag end
+* ✅ **Highlight connected nodes** when a node is selected
+* ✅ **Dim unrelated nodes** — fade to near-invisible
+* ✅ **Canvas minimap** — bottom-right, canvas-based, click-to-pan, hidden on mobile
+* ✅ **Zoom controls** — zoom in/out, fit, re-layout buttons on canvas (bottom-left)
+* ✅ **Mobile responsive** — compact header, slide-up bottom sheet sidebar, hidden minimap
+* ✅ **8-color node palette** — distinct colors for visual differentiation
 
 ---
 
@@ -276,7 +274,7 @@ Optional improvements:
 * Proper React hooks usage
 * Predictable state management
 * Clean folder structure
-* Follow **React Flow best practices**
+* Follow **Cytoscape.js best practices**
 
 ---
 

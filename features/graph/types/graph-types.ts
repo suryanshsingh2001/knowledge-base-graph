@@ -2,6 +2,7 @@ export type GraphNodeData = {
   id: string;
   title: string;
   note?: string;
+  color?: string;
 };
 
 export type GraphEdgeData = {
@@ -14,7 +15,7 @@ export type GraphEdgeData = {
 export type GraphNode = {
   id: string;
   position: { x: number; y: number };
-  data: { title: string; note?: string };
+  data: { title: string; note?: string; color?: string };
 };
 
 export type GraphEdge = {

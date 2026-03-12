@@ -20,7 +20,7 @@ function toGraphNodes(
       x: 100 + (i % 4) * 200,
       y: 100 + Math.floor(i / 4) * 200,
     },
-    data: { title: n.title, note: n.note },
+    data: { title: n.title, note: n.note, color: n.color },
   }));
 }
 
