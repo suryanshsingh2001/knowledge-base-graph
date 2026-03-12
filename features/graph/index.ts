@@ -8,7 +8,7 @@ export { useGraphStore } from "./hooks";
 export { coseBilkentLayoutOptions, saveGraphState, loadGraphState, clearGraphState } from "./lib";
 
 // Types
-export type { GraphNodeData, GraphEdgeData, GraphNode, GraphEdge, GraphState, StoredGraphState } from "./types";
+export type { GraphNodeData, GraphEdgeData, GraphNode, GraphEdge, GraphState, StoredGraphState, GraphCanvasProps } from "./types";
 
 // Data
 export { seedNodes, seedEdges } from "./data";

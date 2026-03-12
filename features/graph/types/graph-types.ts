@@ -35,3 +35,14 @@ export type StoredGraphState = {
   edgeData: GraphEdgeData[];
   positions: Record<string, { x: number; y: number }>;
 };
+
+export type GraphCanvasProps = {
+  nodes: GraphNode[];
+  edges: GraphEdge[];
+  selectedNodeId: string | null;
+  needsInitialLayout: boolean;
+  onNodeClick: (id: string) => void;
+  onPaneClick: () => void;
+  onNodeDrag: (id: string, position: { x: number; y: number }) => void;
+  onPositionsUpdate: (positions: Record<string, { x: number; y: number }>) => void;
+};

@@ -5,4 +5,5 @@ export type {
   GraphEdge,
   GraphState,
   StoredGraphState,
+  GraphCanvasProps,
 } from "./graph-types";
