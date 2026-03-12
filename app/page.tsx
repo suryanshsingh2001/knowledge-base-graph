@@ -1,27 +1,24 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { ReactFlowProvider } from "@xyflow/react";
+import { useState } from "react";
 import { AppHeader } from "@/components/shared/app-header";
 import { GraphCanvas } from "@/features/graph/components/graph-canvas";
 import { useGraphStore } from "@/features/graph/hooks/use-graph-store";
-import { getLayoutedElements } from "@/features/graph/lib/graph-layout";
 import { NodeSidebar } from "@/features/node/components/node-sidebar";
 import { AddNodeDialog } from "@/features/node/components/add-node-dialog";
 import { AddEdgeDialog } from "@/features/node/components/add-edge-dialog";
 
-function KnowledgeGraph() {
+export default function KnowledgeGraphPage() {
   const {
     nodes,
     edges,
     selectedNode,
     selectedNodeId,
     initialized,
-    setNodes,
+    needsInitialLayout,
     setSelectedNodeId,
-    onNodesChange,
-    onEdgesChange,
-    onConnect,
+    updateNodePosition,
+    updateAllPositions,
     addNode,
     updateNode,
     deleteNode,
@@ -31,12 +28,6 @@ function KnowledgeGraph() {
 
   const [addNodeOpen, setAddNodeOpen] = useState(false);
   const [addEdgeOpen, setAddEdgeOpen] = useState(false);
-
-  const handleResetLayout = useCallback(() => {
-    // Pass no positions to force fresh dagre layout
-    const layouted = getLayoutedElements(nodes, edges);
-    setNodes(layouted.nodes);
-  }, [nodes, edges, setNodes]);
 
   if (!initialized) {
     return (
@@ -55,14 +46,13 @@ function KnowledgeGraph() {
             nodes={nodes}
             edges={edges}
             selectedNodeId={selectedNodeId}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-            onConnect={onConnect}
+            needsInitialLayout={needsInitialLayout}
             onNodeClick={setSelectedNodeId}
             onPaneClick={() => setSelectedNodeId(null)}
+            onNodeDrag={updateNodePosition}
+            onPositionsUpdate={updateAllPositions}
             onAddNode={() => setAddNodeOpen(true)}
             onAddEdge={() => setAddEdgeOpen(true)}
-            onResetLayout={handleResetLayout}
           />
         </div>
 
@@ -91,13 +81,5 @@ function KnowledgeGraph() {
         onAdd={addEdgeManual}
       />
     </div>
-  );
-}
-
-export default function KnowledgeGraphPage() {
-  return (
-    <ReactFlowProvider>
-      <KnowledgeGraph />
-    </ReactFlowProvider>
   );
 }

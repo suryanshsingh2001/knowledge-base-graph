@@ -1,14 +1,6 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
-import {
-  useNodesState,
-  useEdgesState,
-  type NodeChange,
-  type EdgeChange,
-  type Connection,
-  addEdge,
-} from "@xyflow/react";
 import type {
   GraphNode,
   GraphEdge,
@@ -17,38 +9,36 @@ import type {
 } from "../types/graph-types";
 import { seedNodes, seedEdges } from "../data/seed-data";
 import { loadGraphState, saveGraphState } from "../lib/graph-storage";
-import { getLayoutedElements } from "../lib/graph-layout";
 
-function toFlowNodes(data: GraphNodeData[]): GraphNode[] {
-  return data.map((n) => ({
+function toGraphNodes(
+  data: GraphNodeData[],
+  positions?: Record<string, { x: number; y: number }>
+): GraphNode[] {
+  return data.map((n, i) => ({
     id: n.id,
-    type: "custom",
-    position: { x: 0, y: 0 },
+    position: positions?.[n.id] ?? {
+      x: 100 + (i % 4) * 200,
+      y: 100 + Math.floor(i / 4) * 200,
+    },
     data: { title: n.title, note: n.note },
   }));
 }
 
-function toFlowEdges(data: GraphEdgeData[]): GraphEdge[] {
+function toGraphEdges(data: GraphEdgeData[]): GraphEdge[] {
   return data.map((e) => ({
     id: e.id,
     source: e.source,
     target: e.target,
     label: e.label,
-    type: "default",
-    animated: true,
-    style: { stroke: "#555", strokeWidth: 2 },
-    labelStyle: { fontSize: 12, fontWeight: 700, fill: "#444", letterSpacing: "0.01em" },
-    labelBgStyle: { fill: "var(--background)", fillOpacity: 0.9, stroke: "#e0e0e0", strokeWidth: 1 },
-    labelBgPadding: [8, 5] as [number, number],
-    labelBgBorderRadius: 6,
   }));
 }
 
 export function useGraphStore() {
-  const [nodes, setNodes, onNodesChange] = useNodesState<GraphNode>([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState<GraphEdge>([]);
+  const [nodes, setNodes] = useState<GraphNode[]>([]);
+  const [edges, setEdges] = useState<GraphEdge[]>([]);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [initialized, setInitialized] = useState(false);
+  const needsInitialLayoutRef = useRef(true);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Persist to localStorage (debounced)
@@ -65,7 +55,7 @@ export function useGraphStore() {
           id: e.id,
           source: e.source,
           target: e.target,
-          label: (e.label as string) ?? "",
+          label: e.label,
         }));
         const positions: Record<string, { x: number; y: number }> = {};
         currentNodes.forEach((n) => {
@@ -80,24 +70,23 @@ export function useGraphStore() {
   // Initialize from localStorage or seed data
   useEffect(() => {
     const stored = loadGraphState();
-    let flowNodes: GraphNode[];
-    let flowEdges: GraphEdge[];
-    let positions: Record<string, { x: number; y: number }> | undefined;
+    let graphNodes: GraphNode[];
+    let graphEdges: GraphEdge[];
 
     if (stored) {
-      flowNodes = toFlowNodes(stored.nodeData);
-      flowEdges = toFlowEdges(stored.edgeData);
-      positions = stored.positions;
+      graphNodes = toGraphNodes(stored.nodeData, stored.positions);
+      graphEdges = toGraphEdges(stored.edgeData);
+      needsInitialLayoutRef.current = false;
     } else {
-      flowNodes = toFlowNodes(seedNodes);
-      flowEdges = toFlowEdges(seedEdges);
+      graphNodes = toGraphNodes(seedNodes);
+      graphEdges = toGraphEdges(seedEdges);
+      needsInitialLayoutRef.current = true;
     }
 
-    const layouted = getLayoutedElements(flowNodes, flowEdges, positions);
-    setNodes(layouted.nodes);
-    setEdges(layouted.edges);
+    setNodes(graphNodes);
+    setEdges(graphEdges);
     setInitialized(true);
-  }, [setNodes, setEdges]);
+  }, []);
 
   // Auto-persist on changes
   useEffect(() => {
@@ -105,100 +94,65 @@ export function useGraphStore() {
     persist(nodes, edges);
   }, [nodes, edges, initialized, persist]);
 
-  const handleNodesChange = useCallback(
-    (changes: NodeChange<GraphNode>[]) => {
-      onNodesChange(changes);
-    },
-    [onNodesChange]
-  );
-
-  const handleEdgesChange = useCallback(
-    (changes: EdgeChange<GraphEdge>[]) => {
-      onEdgesChange(changes);
-    },
-    [onEdgesChange]
-  );
-
-  const onConnect = useCallback(
-    (connection: Connection) => {
-      const newEdge: GraphEdge = {
-        ...connection,
-        id: `e-${connection.source}-${connection.target}`,
-        label: "related to",
-        animated: true,
-        style: { stroke: "#555", strokeWidth: 2 },
-        labelStyle: { fontSize: 12, fontWeight: 700, fill: "#444", letterSpacing: "0.01em" },
-        labelBgStyle: { fill: "var(--background)", fillOpacity: 0.9, stroke: "#e0e0e0", strokeWidth: 1 },
-        labelBgPadding: [8, 5] as [number, number],
-        labelBgBorderRadius: 6,
-      };
-      setEdges((eds) => addEdge(newEdge, eds));
-    },
-    [setEdges]
-  );
-
-  const addNode = useCallback(
-    (title: string, note?: string) => {
-      const id = crypto.randomUUID();
-      const newNode: GraphNode = {
-        id,
-        type: "custom",
-        position: { x: Math.random() * 400 + 100, y: Math.random() * 400 + 100 },
-        data: { title, note },
-      };
-      setNodes((nds) => [...nds, newNode]);
-    },
-    [setNodes]
-  );
+  const addNode = useCallback((title: string, note?: string) => {
+    const id = crypto.randomUUID();
+    const newNode: GraphNode = {
+      id,
+      position: { x: Math.random() * 400 + 100, y: Math.random() * 400 + 100 },
+      data: { title, note },
+    };
+    setNodes((nds) => [...nds, newNode]);
+  }, []);
 
   const updateNode = useCallback(
     (id: string, data: { title?: string; note?: string }) => {
       setNodes((nds) =>
         nds.map((n) =>
-          n.id === id
-            ? { ...n, data: { ...n.data, ...data } }
-            : n
+          n.id === id ? { ...n, data: { ...n.data, ...data } } : n
         )
       );
     },
-    [setNodes]
+    []
   );
 
-  const deleteNode = useCallback(
-    (id: string) => {
-      setNodes((nds) => nds.filter((n) => n.id !== id));
-      setEdges((eds) => eds.filter((e) => e.source !== id && e.target !== id));
-      if (selectedNodeId === id) setSelectedNodeId(null);
+  const updateNodePosition = useCallback(
+    (id: string, position: { x: number; y: number }) => {
+      setNodes((nds) =>
+        nds.map((n) => (n.id === id ? { ...n, position } : n))
+      );
     },
-    [setNodes, setEdges, selectedNodeId]
+    []
   );
+
+  const updateAllPositions = useCallback(
+    (positions: Record<string, { x: number; y: number }>) => {
+      setNodes((nds) =>
+        nds.map((n) => ({
+          ...n,
+          position: positions[n.id] ?? n.position,
+        }))
+      );
+    },
+    []
+  );
+
+  const deleteNode = useCallback((id: string) => {
+    setNodes((nds) => nds.filter((n) => n.id !== id));
+    setEdges((eds) => eds.filter((e) => e.source !== id && e.target !== id));
+    setSelectedNodeId((prev) => (prev === id ? null : prev));
+  }, []);
 
   const addEdgeManual = useCallback(
     (source: string, target: string, label: string) => {
       const id = `e-${source}-${target}-${Date.now()}`;
-      const newEdge: GraphEdge = {
-        id,
-        source,
-        target,
-        label,
-        animated: true,
-        style: { stroke: "#555", strokeWidth: 2 },
-        labelStyle: { fontSize: 12, fontWeight: 700, fill: "#444", letterSpacing: "0.01em" },
-        labelBgStyle: { fill: "var(--background)", fillOpacity: 0.9, stroke: "#e0e0e0", strokeWidth: 1 },
-        labelBgPadding: [8, 5] as [number, number],
-        labelBgBorderRadius: 6,
-      };
-      setEdges((eds) => [...eds, newEdge]);
+      setEdges((eds) => [...eds, { id, source, target, label }]);
     },
-    [setEdges]
+    []
   );
 
-  const deleteEdge = useCallback(
-    (id: string) => {
-      setEdges((eds) => eds.filter((e) => e.id !== id));
-    },
-    [setEdges]
-  );
+  const deleteEdge = useCallback((id: string) => {
+    setEdges((eds) => eds.filter((e) => e.id !== id));
+  }, []);
 
   const selectedNode = nodes.find((n) => n.id === selectedNodeId) ?? null;
 
@@ -208,11 +162,10 @@ export function useGraphStore() {
     selectedNode,
     selectedNodeId,
     initialized,
-    setNodes,
+    needsInitialLayout: needsInitialLayoutRef.current,
     setSelectedNodeId,
-    onNodesChange: handleNodesChange,
-    onEdgesChange: handleEdgesChange,
-    onConnect,
+    updateNodePosition,
+    updateAllPositions,
     addNode,
     updateNode,
     deleteNode,

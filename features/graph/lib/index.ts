@@ -1,4 +1,4 @@
-export { getLayoutedElements } from "./graph-layout";
+export { coseBilkentLayoutOptions } from "./graph-layout";
 export {
   saveGraphState,
   loadGraphState,

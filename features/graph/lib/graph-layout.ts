@@ -1,45 +1,17 @@
-import Dagre from "@dagrejs/dagre";
-import type { GraphNode, GraphEdge } from "../types/graph-types";
-
-export function getLayoutedElements(
-  nodes: GraphNode[],
-  edges: GraphEdge[],
-  positions?: Record<string, { x: number; y: number }>
-): { nodes: GraphNode[]; edges: GraphEdge[] } {
-  // If positions are provided for all nodes, use them
-  if (positions && nodes.every((n) => positions[n.id])) {
-    return {
-      nodes: nodes.map((node) => ({
-        ...node,
-        position: positions[node.id],
-      })),
-      edges,
-    };
-  }
-
-  const g = new Dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
-  g.setGraph({ rankdir: "TB", nodesep: 120, ranksep: 140 });
-
-  nodes.forEach((node) => {
-    const hasNote = node.data.note && node.data.note.length > 0;
-    g.setNode(node.id, { width: 200, height: hasNote ? 100 : 60 });
-  });
-
-  edges.forEach((edge) => {
-    g.setEdge(edge.source, edge.target);
-  });
-
-  Dagre.layout(g);
-
-  const layoutedNodes = nodes.map((node) => {
-    const pos = g.node(node.id);
-    // Use stored position if available, otherwise use dagre layout
-    const position = positions?.[node.id] ?? {
-      x: pos.x - 90,
-      y: pos.y - 30,
-    };
-    return { ...node, position };
-  });
-
-  return { nodes: layoutedNodes, edges };
-}
+export const coseBilkentLayoutOptions = {
+  name: "cose-bilkent" as const,
+  animate: "end" as const,
+  animationDuration: 600,
+  nodeDimensionsIncludeLabels: true,
+  idealEdgeLength: 150,
+  nodeRepulsion: 6500,
+  edgeElasticity: 0.45,
+  nestingFactor: 0.1,
+  gravity: 0.25,
+  numIter: 2500,
+  tile: true,
+  tilingPaddingVertical: 20,
+  tilingPaddingHorizontal: 20,
+  fit: true,
+  padding: 40,
+};

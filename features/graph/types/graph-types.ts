@@ -1,5 +1,3 @@
-import type { Node, Edge } from "@xyflow/react";
-
 export type GraphNodeData = {
   id: string;
   title: string;
@@ -13,8 +11,18 @@ export type GraphEdgeData = {
   label: string;
 };
 
-export type GraphNode = Node<{ title: string; note?: string }, "custom">;
-export type GraphEdge = Edge<{ label: string }>;
+export type GraphNode = {
+  id: string;
+  position: { x: number; y: number };
+  data: { title: string; note?: string };
+};
+
+export type GraphEdge = {
+  id: string;
+  source: string;
+  target: string;
+  label: string;
+};
 
 export type GraphState = {
   nodes: GraphNode[];

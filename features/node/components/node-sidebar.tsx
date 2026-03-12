@@ -93,7 +93,7 @@ export function NodeSidebar({
                     ? `→ ${getNodeTitle(edge.target)}`
                     : `← ${getNodeTitle(edge.source)}`}
                   <span className="ml-1.5 text-muted-foreground">
-                    ({edge.label as string})
+                    ({edge.label})
                   </span>
                 </span>
                 <Button
